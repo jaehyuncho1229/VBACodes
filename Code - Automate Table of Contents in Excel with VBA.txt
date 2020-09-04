@@ -1,0 +1,46 @@
+Sub Auto_Table_Contents()
+    ' Dim is to create variable
+    Dim StartCell As Range ' for inputbox to select range
+    Dim EndCell As Range 'for message box as info
+    Dim Sh As Worksheet
+    Dim ShName As String
+    Dim MsgConfirm As VBA.VbMsgBoxResult ' for message box to confirm
+
+    On Error Resume Next ' Every time there is an error on your code, Excel ends the code
+    
+    Set StartCell = Excel.Application.InputBox("Where do you want to insert the Table of Contents?" _
+    & vbNewLine & "Please select the cell:", "Insert Table of Contents", , , , , , 8)
+    If Err.Number = 424 Then Exit Sub
+    On Error GoTo Handle
+    Set StartCell = StartCell.Cells(1, 1)
+    Set EndCell = StartCell.Offset(Worksheets.Count - 2, 1)
+
+    'Get Confimration
+    MsgConfirm = VBA.MsgBox("The values in cells: " & vbNewLine & StartCell.Address & " to " & EndCell.Address & _
+    " could be overwritten." & vbNewLine & " Would you like to continue?", vbOKCancel + vbDefaultButton2, "Confirmation Required!")
+    If MsgConfirm = vbCancel Then Exit Sub
+    
+    ' Overwrite Cells
+    For Each Sh In Worksheets
+        ShName = Sh.Name
+        ' Take out Title of Current Sheet ; <> is not Equal
+        If ActiveSheet.Name <> Sh.Name Then
+            If Sh.Visible = xlSheetVisible Then
+                ActiveSheet.Hyperlinks.Add Anchor:=StartCell, Address:="", SubAddress:= _
+                "'" & ShName & "'!A1", TextToDisplay:=ShName ' You need Single Quotes, not Double Quotes for reference to work
+                
+                StartCell.Offset(0, 1).Value = Sh.Range("A1").Value
+                Set StartCell = StartCell.Offset(1, 0)
+            End If ' If Sheet is visible
+        End If ' If Sheet is not ActiveSheet
+    Next Sh
+Leave:
+    Exit Sub
+Handle:
+MsgBox "You have an error!"
+End Sub
+
+' To have this code run on all your excel
+' File -> More -> Options -> Check In Developer
+' Developer -> Record Macros -> " Store Macro In: Personal Macro Workbook "
+' ALT + F11 to open VBA Editors -> "VBAProject (PERSONAL.XLSB) -> Modules -> Clear all codes in there and copy and paste code above
